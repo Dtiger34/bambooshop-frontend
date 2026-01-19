@@ -18,7 +18,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: "22"
+          node-version: "20"
 
       - name: Install & build (Next standalone)
         run: |
@@ -32,33 +32,13 @@ jobs:
 
           cp -R .next/standalone/* deploy/
           cp -R .next/static deploy/.next/static
-          cp -R public deploy/public
 
-          test -f deploy/server.js
-          test -f deploy/package.json
+          if [ -d "public" ]; then cp -R public deploy/public; fi
 
-          cd deploy && zip -r app.zip .
+          cd deploy
+          zip -r ../app.zip .
+          cd ..
 
-      # ===== DEBUG START =====
-      - name: Debug context
-        run: |
-          echo "repo=${{ github.repository }}"
-          echo "ref=${{ github.ref }}"
-          echo "event=${{ github.event_name }}"
-
-      - name: Debug secrets presence (safe)
-        run: |
-          test -n "${{ secrets.AZURE_CLIENT_ID }}" && echo "AZURE_CLIENT_ID=OK" || echo "AZURE_CLIENT_ID=MISSING"
-          test -n "${{ secrets.AZURE_TENANT_ID }}" && echo "AZURE_TENANT_ID=OK" || echo "AZURE_TENANT_ID=MISSING"
-          test -n "${{ secrets.AZURE_SUBSCRIPTION_ID }}" && echo "AZURE_SUBSCRIPTION_ID=OK" || echo "AZURE_SUBSCRIPTION_ID=MISSING"
-          test -n "${{ secrets.AZURE_WEBAPP_NAME }}" && echo "AZURE_WEBAPP_NAME=OK" || echo "AZURE_WEBAPP_NAME=MISSING"
-
-      - name: Validate required inputs (fail fast)
-        run: |
-          [ -n "${{ secrets.AZURE_CLIENT_ID }}" ] || (echo "EMPTY: AZURE_CLIENT_ID" && exit 1)
-          [ -n "${{ secrets.AZURE_TENANT_ID }}" ] || (echo "EMPTY: AZURE_TENANT_ID" && exit 1)
-          [ -n "${{ secrets.AZURE_SUBSCRIPTION_ID }}" ] || (echo "EMPTY: AZURE_SUBSCRIPTION_ID" && exit 1)
-      # ===== DEBUG END =====
       - name: Azure Login (OIDC)
         uses: azure/login@v2
         with:
@@ -67,12 +47,8 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      - name: Wait for SCM
-        run: sleep 30
-
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
           app-name: ${{ secrets.AZURE_WEBAPP_NAME }}
-          slot-name: production
-          package: deploy/app.zip
+          package: app.zip
