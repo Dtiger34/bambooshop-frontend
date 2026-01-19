@@ -7,13 +7,11 @@ on:
 
 permissions:
   contents: read
+  id-token: write
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      id-token: none # 🔥 ÉP TẮT OIDC
 
     steps:
       - uses: actions/checkout@v4
@@ -21,7 +19,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
-
       - name: Install & build (Next standalone)
         run: |
           npm ci
@@ -32,22 +29,21 @@ jobs:
           rm -rf deploy
           mkdir -p deploy/.next
 
-          cp -R bambooshop-frontend/.next/standalone/* deploy/
-          cp -R bambooshop-frontend/.next/static deploy/.next/static
-          cp -R bambooshop-frontend/public deploy/public
+          cp -R .next/standalone/* deploy/
+          cp -R .next/static deploy/.next/static
+          cp -R public deploy/public
 
           test -f deploy/server.js
           test -f deploy/package.json
 
           cd deploy && zip -r app.zip .
 
-      - name: Azure Login (Client Secret)
+      - name: Azure Login (OIDC)
         uses: azure/login@v2
         with:
-          auth-type: service-principal
+          auth-type: SERVICE_PRINCIPAL
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
       - name: Wait for SCM
