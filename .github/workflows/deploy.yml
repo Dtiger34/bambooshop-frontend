@@ -29,10 +29,9 @@ jobs:
           npm ci
           npm run build
 
-      # Copy static folder into standalone to serve CSS/JS
       - name: Copy static folder for standalone
         run: |
-          mkdir -p .next/standalone/.next
+          mkdir -p .next/standalone/.next/static
           cp -r .next/static/* .next/standalone/.next/static/
 
       # Azure Login using secrets
