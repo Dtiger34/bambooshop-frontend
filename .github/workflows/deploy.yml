@@ -25,19 +25,9 @@ jobs:
           npm ci
           npm run build
 
-      - name: Package (standalone)
+      - name: Copy static assets to standalone folder
         run: |
-          rm -rf deploy
-          mkdir -p deploy/.next
-
-          cp -R .next/standalone/* deploy/
-          cp -R .next/static deploy/.next/static
-
-          if [ -d "public" ]; then cp -R public deploy/public; fi
-
-          cd deploy
-          zip -r ../app.zip .
-          cd ..
+          cp -r .next/static .next/standalone/.next/
 
       - name: Azure Login (OIDC)
         uses: azure/login@v2
