@@ -19,22 +19,17 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node ${{ env.NODE_VERSION }}
+      - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      - name: npm install and build
+      - name: Install & Build
         run: |
           npm ci
           npm run build
 
-      - name: Copy static folder for standalone
-        run: |
-          mkdir -p .next/standalone/.next/static
-          cp -r .next/static/* .next/standalone/.next/static/
-
-      # Azure Login using secrets
+      # Deploy standalone + static
       - name: Azure Login
         uses: azure/login@v2
         with:
@@ -42,12 +37,13 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      # Deploy to Azure using secret for app name
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
           app-name: ${{ secrets.AZURE_WEBAPP_NAME }}
-          package: "./.next/standalone"
+          package: |
+            .next/standalone
+            .next/static
           clean: true
 
       - name: Azure Logout
