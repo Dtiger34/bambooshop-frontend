@@ -32,12 +32,7 @@ jobs:
 
           cp -R .next/standalone deploy/.next/standalone
           cp -R .next/static deploy/.next/static
-
           if [ -d "public" ]; then cp -R public deploy/public; fi
-
-          cd deploy
-          zip -r ../app.zip .
-          cd ..
 
       - name: Azure Login (OIDC)
         uses: azure/login@v2
@@ -51,4 +46,4 @@ jobs:
         uses: azure/webapps-deploy@v3
         with:
           app-name: ${{ secrets.AZURE_WEBAPP_NAME }}
-          package: app.zip
+          package: deploy
