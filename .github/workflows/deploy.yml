@@ -18,7 +18,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
 
       - name: Install & build (Next standalone)
         run: |
@@ -30,7 +30,7 @@ jobs:
           rm -rf deploy
           mkdir -p deploy/.next
 
-          cp -R .next/standalone/* deploy/
+          cp -R .next/standalone deploy/.next/standalone
           cp -R .next/static deploy/.next/static
 
           if [ -d "public" ]; then cp -R public deploy/public; fi
