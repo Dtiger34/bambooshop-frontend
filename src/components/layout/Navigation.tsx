@@ -2,9 +2,16 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
+import { usePathname } from 'next/navigation';
+import { useAuth } from '@/contexts';
 
 export default function Navigation() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const pathname = usePathname();
+  const { user, logout } = useAuth();
+
+  const isLoginPage = pathname === '/login';
+  const isRegisterPage = pathname === '/register';
 
   return (
     <header className="fixed w-full top-0 z-50 bg-white/80 backdrop-blur-md border-b border-emerald-200">
@@ -20,19 +27,19 @@ export default function Navigation() {
         {/* Navigation links - Desktop */}
         <div className="hidden md:flex items-center space-x-8">
           <Link
-            href="#features"
+            href="/#features"
             className="text-[#264653] hover:text-[#2d6a4f] font-medium transition-colors"
           >
             Tại sao chọn
           </Link>
           <Link
-            href="#products"
+            href="/#products"
             className="text-[#264653] hover:text-[#2d6a4f] font-medium transition-colors"
           >
             Sản phẩm
           </Link>
           <Link
-            href="#contact"
+            href="/#contact"
             className="text-[#264653] hover:text-[#2d6a4f] font-medium transition-colors"
           >
             Liên hệ
@@ -41,9 +48,35 @@ export default function Navigation() {
 
         {/* CTA Buttons - Desktop */}
         <div className="hidden md:flex items-center space-x-4">
-          <button className="px-4 py-2 text-[#2d6a4f] font-semibold hover:bg-emerald-50 rounded-lg transition-colors">
-            Đăng nhập
-          </button>
+          {user ? (
+            <>
+              <span className="text-sm text-gray-600">Xin chào, {user.name}</span>
+              <button 
+                onClick={logout}
+                className="px-4 py-2 text-[#2d6a4f] font-semibold hover:bg-emerald-50 rounded-lg transition-colors"
+              >
+                Đăng xuất
+              </button>
+            </>
+          ) : (
+            <>
+              {isLoginPage ? (
+                <Link
+                  href="/register"
+                  className="px-4 py-2 text-[#2d6a4f] font-semibold hover:bg-emerald-50 rounded-lg transition-colors"
+                >
+                  Đăng ký
+                </Link>
+              ) : (
+                <Link
+                  href="/login"
+                  className="px-4 py-2 text-[#2d6a4f] font-semibold hover:bg-emerald-50 rounded-lg transition-colors"
+                >
+                  Đăng nhập
+                </Link>
+              )}
+            </>
+          )}
           <Link
             href="/cart"
             className="px-4 py-2 bg-gradient-to-r from-[#2d6a4f] to-[#52b788] text-white font-semibold rounded-lg hover:shadow-lg transition-all"
@@ -66,19 +99,45 @@ export default function Navigation() {
       {/* Mobile menu */}
       {isMenuOpen && (
         <div className="md:hidden bg-white border-t border-emerald-200 px-6 py-4 space-y-4">
-          <Link href="#features" className="block text-[#264653] hover:text-[#2d6a4f] font-medium">
+          <Link href="/#features" className="block text-[#264653] hover:text-[#2d6a4f] font-medium">
             Tại sao chọn
           </Link>
-          <Link href="#products" className="block text-[#264653] hover:text-[#2d6a4f] font-medium">
+          <Link href="/#products" className="block text-[#264653] hover:text-[#2d6a4f] font-medium">
             Sản phẩm
           </Link>
-          <Link href="#contact" className="block text-[#264653] hover:text-[#2d6a4f] font-medium">
+          <Link href="/#contact" className="block text-[#264653] hover:text-[#2d6a4f] font-medium">
             Liên hệ
           </Link>
           <div className="pt-4 space-y-2">
-            <button className="w-full px-4 py-2 text-[#2d6a4f] font-semibold hover:bg-emerald-50 rounded-lg transition-colors border border-emerald-300">
-              Đăng nhập
-            </button>
+            {user ? (
+              <>
+                <div className="px-4 py-2 text-sm text-gray-600">Xin chào, {user.name}</div>
+                <button 
+                  onClick={logout}
+                  className="w-full px-4 py-2 text-[#2d6a4f] font-semibold hover:bg-emerald-50 rounded-lg transition-colors border border-emerald-300"
+                >
+                  Đăng xuất
+                </button>
+              </>
+            ) : (
+              <>
+                {isLoginPage ? (
+                  <Link
+                    href="/register"
+                    className="block w-full px-4 py-2 text-[#2d6a4f] font-semibold hover:bg-emerald-50 rounded-lg transition-colors border border-emerald-300 text-center"
+                  >
+                    Đăng ký
+                  </Link>
+                ) : (
+                  <Link
+                    href="/login"
+                    className="block w-full px-4 py-2 text-[#2d6a4f] font-semibold hover:bg-emerald-50 rounded-lg transition-colors border border-emerald-300 text-center"
+                  >
+                    Đăng nhập
+                  </Link>
+                )}
+              </>
+            )}
             <Link
               href="/cart"
               className="block w-full px-4 py-2 bg-gradient-to-r from-[#2d6a4f] to-[#52b788] text-white font-semibold rounded-lg hover:shadow-lg transition-all text-center"

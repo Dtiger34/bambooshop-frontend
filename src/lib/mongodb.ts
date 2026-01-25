@@ -23,6 +23,7 @@ if (!global.mongoose) {
 
 async function connectDB() {
   if (cached.conn) {
+    console.log('✅ Using existing MongoDB connection');
     return cached.conn;
   }
 
@@ -31,13 +32,20 @@ async function connectDB() {
       bufferCommands: false,
     };
 
+    console.log('🔄 Connecting to MongoDB...');
+    console.log('📍 Database URI:', MONGODB_URI.replace(/\/\/.*@/, '//***:***@')); // Hide credentials
+    
     cached.promise = mongoose.connect(MONGODB_URI, opts);
   }
 
   try {
     cached.conn = await cached.promise;
+    console.log('✅ MongoDB connected successfully!');
+    console.log('📦 Database:', cached.conn.connection.db?.databaseName);
+    console.log('🌐 Host:', cached.conn.connection.host);
   } catch (e) {
     cached.promise = null;
+    console.error('❌ MongoDB connection failed:', e);
     throw e;
   }
 
