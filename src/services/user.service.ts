@@ -1,18 +1,18 @@
 import { API_ENDPOINTS } from '@/lib/constants';
-import { CreateProductDto, UpdateProductDto, Product, ProductResponse, ProductsListResponse, ProductFilters } from '@/types/product';
+import { CreateUserDto, UpdateUserDto, User, UserResponse, UsersListResponse } from '@/types/user';
 
-export class ProductService {
+export class UserService {
   /**
-   * Create a new product
+   * Create a new user
    */
-  static async createProduct(productData: CreateProductDto): Promise<ProductResponse> {
+  static async createUser(userData: CreateUserDto): Promise<UserResponse> {
     try {
-      const response = await fetch(API_ENDPOINTS.PRODUCTS.CREATE, {
+      const response = await fetch(API_ENDPOINTS.USERS.CREATE, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(productData),
+        body: JSON.stringify(userData),
       });
 
       const data = await response.json();
@@ -20,14 +20,14 @@ export class ProductService {
       if (!response.ok) {
         return {
           success: false,
-          message: data.message || 'Failed to create product',
+          message: data.message || 'Failed to create user',
         };
       }
 
       return {
         success: true,
-        data: data.data,
-        message: 'Product created successfully',
+        data: data.user,
+        message: 'User created successfully',
       };
     } catch (error) {
       return {
@@ -38,21 +38,11 @@ export class ProductService {
   }
 
   /**
-   * Get all products with optional filters
+   * Get all users
    */
-  static async getAllProducts(filters?: ProductFilters): Promise<ProductsListResponse> {
+  static async getAllUsers(): Promise<UsersListResponse> {
     try {
-      const params = new URLSearchParams();
-      
-      if (filters?.category) params.append('category', filters.category);
-      if (filters?.minPrice !== undefined) params.append('minPrice', filters.minPrice.toString());
-      if (filters?.maxPrice !== undefined) params.append('maxPrice', filters.maxPrice.toString());
-      if (filters?.isActive !== undefined) params.append('isActive', filters.isActive.toString());
-      if (filters?.search) params.append('search', filters.search);
-
-      const url = `${API_ENDPOINTS.PRODUCTS.GET_ALL}${params.toString() ? `?${params.toString()}` : ''}`;
-      
-      const response = await fetch(url, {
+      const response = await fetch(API_ENDPOINTS.USERS.GET_ALL, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -64,14 +54,13 @@ export class ProductService {
       if (!response.ok) {
         return {
           success: false,
-          message: data.message || 'Failed to fetch products',
+          message: data.message || 'Failed to fetch users',
         };
       }
 
       return {
         success: true,
-        data: data.data,
-        total: data.total,
+        data: data.users,
       };
     } catch (error) {
       return {
@@ -82,11 +71,11 @@ export class ProductService {
   }
 
   /**
-   * Get product by ID
+   * Get user by ID
    */
-  static async getProductById(id: string): Promise<ProductResponse> {
+  static async getUserById(id: string): Promise<UserResponse> {
     try {
-      const response = await fetch(API_ENDPOINTS.PRODUCTS.GET_BY_ID(id), {
+      const response = await fetch(API_ENDPOINTS.USERS.GET_BY_ID(id), {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -98,13 +87,13 @@ export class ProductService {
       if (!response.ok) {
         return {
           success: false,
-          message: data.message || 'Failed to fetch product',
+          message: data.message || 'Failed to fetch user',
         };
       }
 
       return {
         success: true,
-        data: data.data,
+        data: data.user,
       };
     } catch (error) {
       return {
@@ -115,16 +104,16 @@ export class ProductService {
   }
 
   /**
-   * Update product
+   * Update user
    */
-  static async updateProduct(id: string, productData: UpdateProductDto): Promise<ProductResponse> {
+  static async updateUser(id: string, userData: UpdateUserDto): Promise<UserResponse> {
     try {
-      const response = await fetch(API_ENDPOINTS.PRODUCTS.UPDATE(id), {
+      const response = await fetch(API_ENDPOINTS.USERS.UPDATE(id), {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(productData),
+        body: JSON.stringify(userData),
       });
 
       const data = await response.json();
@@ -132,14 +121,14 @@ export class ProductService {
       if (!response.ok) {
         return {
           success: false,
-          message: data.message || 'Failed to update product',
+          message: data.message || 'Failed to update user',
         };
       }
 
       return {
         success: true,
-        data: data.data,
-        message: 'Product updated successfully',
+        data: data.user,
+        message: 'User updated successfully',
       };
     } catch (error) {
       return {
@@ -150,11 +139,11 @@ export class ProductService {
   }
 
   /**
-   * Delete product
+   * Delete user
    */
-  static async deleteProduct(id: string): Promise<ProductResponse> {
+  static async deleteUser(id: string): Promise<UserResponse> {
     try {
-      const response = await fetch(API_ENDPOINTS.PRODUCTS.DELETE(id), {
+      const response = await fetch(API_ENDPOINTS.USERS.DELETE(id), {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -166,13 +155,13 @@ export class ProductService {
       if (!response.ok) {
         return {
           success: false,
-          message: data.message || 'Failed to delete product',
+          message: data.message || 'Failed to delete user',
         };
       }
 
       return {
         success: true,
-        message: 'Product deleted successfully',
+        message: 'User deleted successfully',
       };
     } catch (error) {
       return {
