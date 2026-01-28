@@ -1,68 +1,40 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient, Prisma, OrderStatus } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import connectDB from '@/lib/mongodb';
+import Order from '@/models/Order';
+import User from '@/models/User';
+import Product from '@/models/Product';
 
 /**
  * GET /api/orders - Get all orders with optional filters
  */
 export async function GET(request: NextRequest) {
   try {
+    await connectDB();
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId');
     const status = searchParams.get('status');
 
     // Build filter object
-    const where: Prisma.OrderWhereInput = {};
+    const filter: any = {};
 
     if (userId) {
-      where.userId = userId;
+      filter.userId = userId;
     }
 
     if (status) {
-      where.status = status;
+      filter.status = status;
     }
 
-    const orders = await prisma.order.findMany({
-      where,
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
-        },
-        orderItems: {
-          include: {
-            product: {
-              select: {
-                id: true,
-                name: true,
-                imageUrl: true,
-              },
-            },
-          },
-        },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
-
-    // Transform data to include product names in order items
-    const transformedOrders = orders.map(order => ({
-      ...order,
-      userName: order.user.name,
-      userEmail: order.user.email,
-      orderItems: order.orderItems.map(item => ({
-        ...item,
-        productName: item.product.name,
-      })),
-    }));
+    const orders = await Order.find(filter)
+      .populate('userId', 'id name email')
+      .populate('items.productId', 'id name imageUrl price')
+      .sort({ createdAt: -1 })
+      .lean();
 
     return NextResponse.json({
       success: true,
-      data: transformedOrders,
-      total: transformedOrders.length,
+      data: orders,
+      total: orders.length,
     });
   } catch (error) {
     console.error('Error fetching orders:', error);
@@ -81,6 +53,7 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
+    await connectDB();
     const body = await request.json();
     const { userId, items, shippingAddress, paymentMethod, notes } = body;
 
@@ -96,9 +69,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify user exists
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-    });
+    const user = await User.findById(userId);
 
     if (!user) {
       return NextResponse.json(
@@ -112,9 +83,7 @@ export async function POST(request: NextRequest) {
 
     // Verify all products exist and have sufficient stock
     for (const item of items) {
-      const product = await prisma.product.findUnique({
-        where: { id: item.productId },
-      });
+      const product = await Product.findById(item.productId);
 
       if (!product) {
         return NextResponse.json(
@@ -142,72 +111,38 @@ export async function POST(request: NextRequest) {
       return sum + (item.price * item.quantity);
     }, 0);
 
-    // Create order with items in a transaction
-    const order = await prisma.$transaction(async (tx) => {
-      // Create the order
-      const newOrder = await tx.order.create({
-        data: {
-          userId,
-          totalAmount,
-          shippingAddress,
-          paymentMethod,
-          notes,
-          status: 'PENDING',
-        },
-      });
+    // Create order with items
+    const orderItems = items.map((item: any) => ({
+      productId: item.productId,
+      quantity: item.quantity,
+      price: item.price,
+    }));
 
-      // Create order items and update product stock
-      for (const item of items) {
-        await tx.orderItem.create({
-          data: {
-            orderId: newOrder.id,
-            productId: item.productId,
-            quantity: item.quantity,
-            price: item.price,
-          },
-        });
-
-        // Decrease product stock
-        await tx.product.update({
-          where: { id: item.productId },
-          data: {
-            stock: {
-              decrement: item.quantity,
-            },
-          },
-        });
-      }
-
-      // Fetch complete order with relations
-      return await tx.order.findUnique({
-        where: { id: newOrder.id },
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-            },
-          },
-          orderItems: {
-            include: {
-              product: {
-                select: {
-                  id: true,
-                  name: true,
-                  imageUrl: true,
-                },
-              },
-            },
-          },
-        },
-      });
+    const order = await Order.create({
+      userId,
+      items: orderItems,
+      totalAmount,
+      shippingAddress,
+      paymentMethod,
+      notes,
+      status: 'PENDING',
     });
+
+    // Update product stock
+    for (const item of items) {
+      await Product.findByIdAndUpdate(
+        item.productId,
+        { $inc: { stock: -item.quantity } },
+        { new: true }
+      );
+    }
+
+    const populatedOrder = await order.populate('userId', 'id name email').populate('items.productId', 'id name imageUrl price');
 
     return NextResponse.json(
       {
         success: true,
-        data: order,
+        data: populatedOrder,
         message: 'Order created successfully',
       },
       { status: 201 }

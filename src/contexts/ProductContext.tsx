@@ -1,7 +1,8 @@
-'use client';
+"use client";
 
 import { createContext, useContext, useState, ReactNode } from 'react';
-import { Product } from '@/types/product';
+import { Product, CreateProductDto, UpdateProductDto } from '@/types/product';
+import { ProductService } from '@/services/product.service';
 
 interface ProductContextType {
   products: Product[];
@@ -9,8 +10,8 @@ interface ProductContextType {
   error: string | null;
   fetchProducts: () => Promise<void>;
   fetchProductById: (id: string) => Promise<Product>;
-  createProduct: (product: Omit<Product, 'id'>) => Promise<Product>;
-  updateProduct: (id: string, product: Partial<Product>) => Promise<Product>;
+  createProduct: (product: CreateProductDto) => Promise<Product>;
+  updateProduct: (id: string, product: UpdateProductDto) => Promise<Product>;
   deleteProduct: (id: string) => Promise<void>;
 }
 
@@ -25,109 +26,47 @@ export function ProductProvider({ children }: { children: ReactNode }) {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await fetch('/api/products');
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to fetch products');
+      const res = await ProductService.getAllProducts();
+      if (!res.success) {
+        setError(res.message || 'Lỗi khi tải sản phẩm');
+        setProducts([]);
+      } else {
+        setProducts(res.data || []);
       }
-
-      setProducts(data.products || []);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'An error occurred';
+      const errorMessage = err instanceof Error ? err.message : 'Đã xảy ra lỗi';
       setError(errorMessage);
       console.error('Fetch products error:', err);
     } finally {
       setIsLoading(false);
     }
   };
-
+  
   const fetchProductById = async (id: string): Promise<Product> => {
-    try {
-      const response = await fetch(`/api/products/${id}`);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to fetch product');
-      }
-
-      return data.product;
-    } catch (err) {
-      console.error('Fetch product error:', err);
-      throw err;
-    }
+    const res = await ProductService.getProductById(id);
+    if (!res.success) throw new Error(res.message || 'Không thể tải sản phẩm');
+    return res.data as Product;
   };
 
-  const createProduct = async (product: Omit<Product, 'id'>): Promise<Product> => {
-    try {
-      const response = await fetch('/api/products', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(product),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to create product');
-      }
-
-      // Refresh products list
-      await fetchProducts();
-
-      return data.product;
-    } catch (err) {
-      console.error('Create product error:', err);
-      throw err;
-    }
+  const createProduct = async (product: CreateProductDto): Promise<Product> => {
+    const res = await ProductService.createProduct(product);
+    if (!res.success) throw new Error(res.message || 'Không thể tạo sản phẩm');
+    // Refresh products list
+    await fetchProducts();
+    return res.data as Product;
   };
 
-  const updateProduct = async (id: string, product: Partial<Product>): Promise<Product> => {
-    try {
-      const response = await fetch(`/api/products/${id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(product),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to update product');
-      }
-
-      // Refresh products list
-      await fetchProducts();
-
-      return data.product;
-    } catch (err) {
-      console.error('Update product error:', err);
-      throw err;
-    }
+  const updateProduct = async (id: string, product: UpdateProductDto): Promise<Product> => {
+    const res = await ProductService.updateProduct(id, product);
+    if (!res.success) throw new Error(res.message || 'Không thể cập nhật sản phẩm');
+    await fetchProducts();
+    return res.data as Product;
   };
 
   const deleteProduct = async (id: string): Promise<void> => {
-    try {
-      const response = await fetch(`/api/products/${id}`, {
-        method: 'DELETE',
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to delete product');
-      }
-
-      // Refresh products list
-      await fetchProducts();
-    } catch (err) {
-      console.error('Delete product error:', err);
-      throw err;
-    }
+    const res = await ProductService.deleteProduct(id);
+    if (!res.success) throw new Error(res.message || 'Không thể xóa sản phẩm');
+    await fetchProducts();
   };
 
   const value = {

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient, Prisma, OrderStatus } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import connectDB from '@/lib/mongodb';
+import Order from '@/models/Order';
+import Product from '@/models/Product';
 
 /**
  * GET /api/orders/[id] - Get order by ID
@@ -11,30 +11,11 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const order = await prisma.order.findUnique({
-      where: { id: params.id },
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
-        },
-        orderItems: {
-          include: {
-            product: {
-              select: {
-                id: true,
-                name: true,
-                imageUrl: true,
-                price: true,
-              },
-            },
-          },
-        },
-      },
-    });
+    await connectDB();
+    const order = await Order.findById(params.id)
+      .populate('userId', 'id name email')
+      .populate('items.productId', 'id name imageUrl price')
+      .lean();
 
     if (!order) {
       return NextResponse.json(
@@ -46,20 +27,9 @@ export async function GET(
       );
     }
 
-    // Transform data
-    const transformedOrder = {
-      ...order,
-      userName: order.user.name,
-      userEmail: order.user.email,
-      orderItems: order.orderItems.map(item => ({
-        ...item,
-        productName: item.product.name,
-      })),
-    };
-
     return NextResponse.json({
       success: true,
-      data: transformedOrder,
+      data: order,
     });
   } catch (error) {
     console.error('Error fetching order:', error);
@@ -81,13 +51,12 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
+    await connectDB();
     const body = await request.json();
     const { status, shippingAddress, paymentMethod, notes } = body;
 
     // Check if order exists
-    const existingOrder = await prisma.order.findUnique({
-      where: { id: params.id },
-    });
+    const existingOrder = await Order.findById(params.id);
 
     if (!existingOrder) {
       return NextResponse.json(
@@ -100,8 +69,8 @@ export async function PUT(
     }
 
     // Validate status if provided
-    const validStatuses: OrderStatus[] = ['PENDING', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED'];
-    if (status && !validStatuses.includes(status as OrderStatus)) {
+    const validStatuses = ['PENDING', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED'];
+    if (status && !validStatuses.includes(status)) {
       return NextResponse.json(
         {
           success: false,
@@ -112,37 +81,17 @@ export async function PUT(
     }
 
     // Prepare update data
-    const updateData: Prisma.OrderUpdateInput = {};
-    if (status !== undefined) updateData.status = status as OrderStatus;
+    const updateData: any = {};
+    if (status !== undefined) updateData.status = status;
     if (shippingAddress !== undefined) updateData.shippingAddress = shippingAddress;
     if (paymentMethod !== undefined) updateData.paymentMethod = paymentMethod;
     if (notes !== undefined) updateData.notes = notes;
 
     // Update order
-    const order = await prisma.order.update({
-      where: { id: params.id },
-      data: updateData,
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
-        },
-        orderItems: {
-          include: {
-            product: {
-              select: {
-                id: true,
-                name: true,
-                imageUrl: true,
-              },
-            },
-          },
-        },
-      },
-    });
+    const order = await Order.findByIdAndUpdate(params.id, updateData, { new: true })
+      .populate('userId', 'id name email')
+      .populate('items.productId', 'id name imageUrl price')
+      .lean();
 
     return NextResponse.json({
       success: true,
