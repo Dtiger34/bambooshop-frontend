@@ -3,12 +3,10 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { useAuth } from '@/contexts';
 
 export default function Navigation() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const pathname = usePathname();
-  const { user, logout } = useAuth();
 
   const isLoginPage = pathname === '/login';
   const isRegisterPage = pathname === '/register';
@@ -48,34 +46,20 @@ export default function Navigation() {
 
         {/* CTA Buttons - Desktop */}
         <div className="hidden md:flex items-center space-x-4">
-          {user ? (
-            <>
-              <span className="text-sm text-gray-600">Xin chào, {user.name}</span>
-              <button 
-                onClick={logout}
-                className="px-4 py-2 text-[#2d6a4f] font-semibold hover:bg-emerald-50 rounded-lg transition-colors"
-              >
-                Đăng xuất
-              </button>
-            </>
+          {isLoginPage ? (
+            <Link
+              href="/register"
+              className="px-4 py-2 text-[#2d6a4f] font-semibold hover:bg-emerald-50 rounded-lg transition-colors"
+            >
+              Đăng ký
+            </Link>
           ) : (
-            <>
-              {isLoginPage ? (
-                <Link
-                  href="/register"
-                  className="px-4 py-2 text-[#2d6a4f] font-semibold hover:bg-emerald-50 rounded-lg transition-colors"
-                >
-                  Đăng ký
-                </Link>
-              ) : (
-                <Link
-                  href="/login"
-                  className="px-4 py-2 text-[#2d6a4f] font-semibold hover:bg-emerald-50 rounded-lg transition-colors"
-                >
-                  Đăng nhập
-                </Link>
-              )}
-            </>
+            <Link
+              href="/login"
+              className="px-4 py-2 text-[#2d6a4f] font-semibold hover:bg-emerald-50 rounded-lg transition-colors"
+            >
+              Đăng nhập
+            </Link>
           )}
           <Link
             href="/cart"
@@ -109,34 +93,20 @@ export default function Navigation() {
             Liên hệ
           </Link>
           <div className="pt-4 space-y-2">
-            {user ? (
-              <>
-                <div className="px-4 py-2 text-sm text-gray-600">Xin chào, {user.name}</div>
-                <button 
-                  onClick={logout}
-                  className="w-full px-4 py-2 text-[#2d6a4f] font-semibold hover:bg-emerald-50 rounded-lg transition-colors border border-emerald-300"
-                >
-                  Đăng xuất
-                </button>
-              </>
+            {isLoginPage ? (
+              <Link
+                href="/register"
+                className="block w-full px-4 py-2 text-[#2d6a4f] font-semibold hover:bg-emerald-50 rounded-lg transition-colors border border-emerald-300 text-center"
+              >
+                Đăng ký
+              </Link>
             ) : (
-              <>
-                {isLoginPage ? (
-                  <Link
-                    href="/register"
-                    className="block w-full px-4 py-2 text-[#2d6a4f] font-semibold hover:bg-emerald-50 rounded-lg transition-colors border border-emerald-300 text-center"
-                  >
-                    Đăng ký
-                  </Link>
-                ) : (
-                  <Link
-                    href="/login"
-                    className="block w-full px-4 py-2 text-[#2d6a4f] font-semibold hover:bg-emerald-50 rounded-lg transition-colors border border-emerald-300 text-center"
-                  >
-                    Đăng nhập
-                  </Link>
-                )}
-              </>
+              <Link
+                href="/login"
+                className="block w-full px-4 py-2 text-[#2d6a4f] font-semibold hover:bg-emerald-50 rounded-lg transition-colors border border-emerald-300 text-center"
+              >
+                Đăng nhập
+              </Link>
             )}
             <Link
               href="/cart"

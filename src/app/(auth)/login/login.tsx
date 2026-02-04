@@ -1,42 +1,16 @@
 'use client';
 
 import { useState, FormEvent } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { useAuth } from '@/contexts';
 
 export default function LoginPage() {
-  const router = useRouter();
-  const { login, user } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
   });
-  const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setError('');
-    setIsLoading(true);
-
-    try {
-      await login(formData.email, formData.password);
-      
-      // Redirect based on role (user will be updated in context)
-      // We need to wait a bit for context to update
-      setTimeout(() => {
-        if (user?.role === 'ADMIN') {
-          router.push('/dashboard');
-        } else {
-          router.push('/');
-        }
-      }, 100);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
-    } finally {
-      setIsLoading(false);
-    }
   };
 
   return (
@@ -66,16 +40,6 @@ export default function LoginPage() {
         {/* Login Form */}
         <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-[#95d5b2]/30 p-8">
           <form className="space-y-5" onSubmit={handleSubmit}>
-            {/* Error Message */}
-            {error && (
-              <div className="bg-red-50 border-l-4 border-red-400 text-red-700 px-4 py-3 rounded-lg text-sm flex items-start">
-                <svg className="w-5 h-5 mr-2 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                </svg>
-                <span>{error}</span>
-              </div>
-            )}
-
             {/* Email Field */}
             <div>
               <label htmlFor="email" className="block text-sm font-semibold text-[#1b4332] mb-2">
@@ -145,32 +109,6 @@ export default function LoginPage() {
                   Quên mật khẩu?
                 </a>
               </div>
-            </div>
-
-            {/* Submit Button */}
-            <div className="pt-2">
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="group relative w-full flex justify-center py-3.5 px-4 border border-transparent text-base font-semibold rounded-xl text-white bg-gradient-to-r from-[#2d6a4f] to-[#52b788] hover:from-[#1b4332] hover:to-[#2d6a4f] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#2d6a4f] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
-              >
-                {isLoading ? (
-                  <>
-                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Đang đăng nhập...
-                  </>
-                ) : (
-                  <>
-                    <span>Đăng nhập</span>
-                    <svg className="ml-2 -mr-1 w-5 h-5 group-hover:translate-x-1 transition-transform" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd" />
-                    </svg>
-                  </>
-                )}
-              </button>
             </div>
 
             {/* Divider */}

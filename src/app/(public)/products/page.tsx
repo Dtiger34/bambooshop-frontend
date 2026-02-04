@@ -2,12 +2,11 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
-import { useProducts } from '@/contexts';
 import { Product } from '@/types/product';
 import { productPageStyles } from '@/app/(public)/products/productPageStyles';
 
 export default function ProductsPage() {
-  const { products, isLoading, error, fetchProducts } = useProducts();
+  const [products] = useState<Product[]>([]);
 
   const [query, setQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState(query);
@@ -15,10 +14,6 @@ export default function ProductsPage() {
   const [minPrice, setMinPrice] = useState<number | ''>('');
   const [maxPrice, setMaxPrice] = useState<number | ''>('');
 
-  useEffect(() => {
-    fetchProducts();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   // debounce search input to reduce re-renders
   useEffect(() => {
@@ -104,37 +99,29 @@ export default function ProductsPage() {
 
           {/* Product grid */}
           <section className={productPageStyles.productSection}>
-            {isLoading ? (
-              <div className={productPageStyles.loadingContainer}>
-                <div className={productPageStyles.loadingText}>Đang tải...</div>
-              </div>
-            ) : error ? (
-              <div className={productPageStyles.errorText}>{error}</div>
-            ) : (
-              <div className={productPageStyles.productGrid}>
-                {filtered.map((p: Product, idx) => (
-                  <div key={`${p.id}-${idx}`} className={productPageStyles.productCard}>
-                    <div className={productPageStyles.productImage}>
-                      {p.imageUrl ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={p.imageUrl} alt={p.name} className={productPageStyles.productImageElement} />
-                      ) : (
-                        <div className={productPageStyles.productPlaceholder}>📦</div>
-                      )}
-                    </div>
+            <div className={productPageStyles.productGrid}>
+              {filtered.map((p: Product, idx) => (
+                <div key={`${p.id}-${idx}`} className={productPageStyles.productCard}>
+                  <div className={productPageStyles.productImage}>
+                    {p.imageUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={p.imageUrl} alt={p.name} className={productPageStyles.productImageElement} />
+                    ) : (
+                      <div className={productPageStyles.productPlaceholder}>📦</div>
+                    )}
+                  </div>
 
-                    <div className={productPageStyles.productContent}>
-                      <h3 className={productPageStyles.productName}>{p.name}</h3>
-                      <p className={productPageStyles.productDescription}>{p.description}</p>
-                      <div className={productPageStyles.productFooter}>
-                        <span className={productPageStyles.productPrice}>{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(p.price || 0)}</span>
-                        <Link href={`/products/${p.id}`} className={productPageStyles.productLink}>Xem</Link>
-                      </div>
+                  <div className={productPageStyles.productContent}>
+                    <h3 className={productPageStyles.productName}>{p.name}</h3>
+                    <p className={productPageStyles.productDescription}>{p.description}</p>
+                    <div className={productPageStyles.productFooter}>
+                      <span className={productPageStyles.productPrice}>{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(p.price || 0)}</span>
+                      <Link href={`/products/${p.id}`} className={productPageStyles.productLink}>Xem</Link>
                     </div>
                   </div>
-                ))}
-              </div>
-            )}
+                </div>
+              ))}
+            </div>
           </section>
         </div>
       </div>
